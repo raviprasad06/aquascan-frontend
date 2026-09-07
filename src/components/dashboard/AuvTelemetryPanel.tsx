@@ -24,13 +24,12 @@ export const AuvTelemetryPanel: React.FC = () => {
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4 text-white" />
           <span className="text-xs font-bold text-white tracking-widest uppercase">
-            AUV TELEMETRY STREAM // SUBSEA SENSOR POD
+            AUV SENSOR TELEMETRY // DEMO DATA
           </span>
         </div>
         <div className="flex items-center gap-3 text-[10px] text-[#888888]">
-          <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
-            LIVE LINK
+          <span className="flex items-center gap-1 px-1.5 py-0.5 border border-[#444444] text-[#777777]">
+            SIMULATED
           </span>
           <span>BATTERY: {telemetry.batteryLevel}%</span>
         </div>
@@ -56,7 +55,7 @@ export const AuvTelemetryPanel: React.FC = () => {
       {/* Position coordinates ribbon */}
       <div className="mt-3 pt-3 border-t border-[#1a1a1a] flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#888888]">
         <div>
-          GEODETIC POSITION: <strong className="text-white">{formatCoordinates(telemetry.latitude, telemetry.longitude)}</strong>
+          GEODETIC POSITION: <strong className="text-white">LOCATION DATA NOT AVAILABLE</strong>
         </div>
         <div className="flex items-center gap-4 text-[10px]">
           <span>WATER TEMP: {telemetry.waterTemp}°C</span>

@@ -186,7 +186,7 @@ export const LiveWaterfallFeed: React.FC = () => {
           <span>SPECKLE REJECTION: ACTIVE</span>
         </div>
         <div className="text-white font-bold">
-          LAT: {telemetry.latitude.toFixed(4)}° N // LON: {telemetry.longitude.toFixed(4)}° E
+          GPS: LOCATION DATA NOT AVAILABLE
         </div>
       </div>
     </div>

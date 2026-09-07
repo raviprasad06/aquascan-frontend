@@ -1,16 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { AnalysisStep, AnalysisStatus, AnalysisStepNumber } from '../types/analysis';
+import { AnalysisStep, AnalysisStatus } from '../types/analysis';
 import { SonarAnomaly } from '../types/anomaly';
 
 export const ANALYSIS_STEPS: AnalysisStep[] = [
-  { step: 1, code: 'STEP 01', label: 'INITIALIZING SONAR INPUT', detail: 'Connecting to hydrophone array & decoding raw ping data', durationMs: 900 },
-  { step: 2, code: 'STEP 02', label: 'CALIBRATING ACOUSTIC SIGNAL', detail: 'Normalizing port & starboard transducer gain channels', durationMs: 1000 },
-  { step: 3, code: 'STEP 03', label: 'FILTERING SPECKLE NOISE', detail: 'Applying adaptive spatial median filter to water column reverberation', durationMs: 1100 },
-  { step: 4, code: 'STEP 04', label: 'ANALYZING SEAFLOOR TOPOLOGY', detail: 'Extracting bathymetric relief gradients and sand ripple baselines', durationMs: 1200 },
-  { step: 5, code: 'STEP 05', label: 'IDENTIFYING ARTIFICIAL SIGNATURES', detail: 'Running high-frequency neural convolutional feature detection', durationMs: 1400 },
-  { step: 6, code: 'STEP 06', label: 'CALCULATING CONFIDENCE', detail: 'Evaluating acoustic impedance and shadow projection lengths', durationMs: 1100 },
-  { step: 7, code: 'STEP 07', label: 'GEOLOCATION LOCK', detail: 'Correlating sensor position with surface RTK differential GPS', durationMs: 900 },
-  { step: 8, code: 'STEP 08', label: 'ANALYSIS COMPLETE', detail: 'All acoustic targets classified and cataloged in mission ledger', durationMs: 600 }
+  { step: 1, code: 'STEP 01', label: 'IMAGE LOADED', detail: 'Side-scan sonar image loaded into memory', durationMs: 400 },
+  { step: 2, code: 'STEP 02', label: 'AI INFERENCE', detail: 'Executing YOLO segmentation neural network', durationMs: 600 },
+  { step: 3, code: 'STEP 03', label: 'OBJECT DETECTION', detail: 'Extracting bounding contours and segmentation masks', durationMs: 500 },
+  { step: 4, code: 'STEP 04', label: 'CONFIDENCE CALCULATION', detail: 'Evaluating class probabilities and risk metrics', durationMs: 400 },
+  { step: 5, code: 'STEP 05', label: 'RESULT READY', detail: 'Detections cataloged and ready for inspection', durationMs: 300 }
 ];
 
 export function useSonarSimulation(allAnomalies: SonarAnomaly[]) {
@@ -24,7 +21,7 @@ export function useSonarSimulation(allAnomalies: SonarAnomaly[]) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
-  const currentStep = ANALYSIS_STEPS[currentStepIndex];
+  const currentStep = ANALYSIS_STEPS[currentStepIndex] || ANALYSIS_STEPS[0];
 
   const resetAnalysis = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -71,14 +68,12 @@ export function useSonarSimulation(allAnomalies: SonarAnomaly[]) {
       const stepProgress = Math.round(((currentStepIdx + 1) / totalSteps) * 100);
       setProgress(stepProgress);
 
-      // Animate laser position and progressive reveal
       const targetLaserY = ((currentStepIdx + 1) / totalSteps) * 100;
       setLaserY(targetLaserY);
 
-      // Reveal anomalies that are above this laser position
       const newlyRevealed = new Set<string>();
       allAnomalies.forEach(a => {
-        if (a.boundingBox.y <= targetLaserY) {
+        if (!a.boundingBox || a.boundingBox.y <= targetLaserY) {
           newlyRevealed.add(a.id);
         }
       });

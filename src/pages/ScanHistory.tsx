@@ -2,20 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { ReportsTable } from '../components/reports/ReportsTable';
 import { getScanHistory, ScanRecord } from '../utils/scanStorage';
 
-export const ReportsPage: React.FC = () => {
+export const ScanHistory: React.FC = () => {
   const [scans, setScans] = useState<ScanRecord[]>([]);
 
   useEffect(() => {
-    const syncScans = () => {
+    const syncHistory = () => {
       setScans(getScanHistory());
     };
-    syncScans();
-    window.addEventListener('aquascan-scan-updated', syncScans);
-    window.addEventListener('storage', syncScans);
+    syncHistory();
+    window.addEventListener('aquascan-scan-updated', syncHistory);
+    window.addEventListener('storage', syncHistory);
 
     return () => {
-      window.removeEventListener('aquascan-scan-updated', syncScans);
-      window.removeEventListener('storage', syncScans);
+      window.removeEventListener('aquascan-scan-updated', syncHistory);
+      window.removeEventListener('storage', syncHistory);
     };
   }, []);
 
@@ -25,3 +25,5 @@ export const ReportsPage: React.FC = () => {
     </div>
   );
 };
+
+export default ScanHistory;

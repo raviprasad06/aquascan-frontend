@@ -5,6 +5,7 @@ import { MicroRadar } from '../radar/MicroRadar';
 import { MOCK_ANOMALIES } from '../../data/mockAnomalies';
 import { SonarAnomaly } from '../../types/anomaly';
 import { formatCoordinates, formatDimensions } from '../../utils/formatters';
+import { getScanHistory } from '../../utils/scanStorage';
 
 interface RadarSearchBarProps {
   className?: string;
@@ -50,7 +51,10 @@ export const RadarSearchBar: React.FC<RadarSearchBarProps> = ({
     'Pipe'
   ];
 
-  const filteredAnomalies = MOCK_ANOMALIES.filter(item => {
+  const realDetections = getScanHistory().flatMap(s => s.detections);
+  const sourceAnomalies = realDetections.length > 0 ? realDetections : MOCK_ANOMALIES;
+
+  const filteredAnomalies = sourceAnomalies.filter(item => {
     if (!query.trim()) return true;
     const q = query.toLowerCase().trim();
 
@@ -62,13 +66,13 @@ export const RadarSearchBar: React.FC<RadarSearchBarProps> = ({
     }
 
     return (
-      item.id.toLowerCase().includes(q) ||
-      item.classification.toLowerCase().includes(q) ||
-      item.latitude.toString().includes(q) ||
-      item.longitude.toString().includes(q) ||
-      item.priority.toLowerCase().includes(q) ||
-      item.status.toLowerCase().includes(q) ||
-      item.surveyLine.toLowerCase().includes(q)
+      (item.id && item.id.toLowerCase().includes(q)) ||
+      (item.classification && item.classification.toLowerCase().includes(q)) ||
+      (typeof item.latitude === 'number' && item.latitude.toString().includes(q)) ||
+      (typeof item.longitude === 'number' && item.longitude.toString().includes(q)) ||
+      (item.priority && item.priority.toLowerCase().includes(q)) ||
+      (item.status && item.status.toLowerCase().includes(q)) ||
+      (item.surveyLine && item.surveyLine.toLowerCase().includes(q))
     );
   });
 
@@ -217,8 +221,8 @@ export const RadarSearchBar: React.FC<RadarSearchBarProps> = ({
                           <Crosshair className="w-3 h-3 text-[#aaaaaa]" />
                           {formatCoordinates(item.latitude, item.longitude)}
                         </span>
-                        <span>DEPTH: {item.depth}M</span>
-                        <span>TRANSECT: {item.surveyLine}</span>
+                        <span>DEPTH: {typeof item.depth === 'number' ? `${item.depth}M` : 'N/A'}</span>
+                        <span>TRANSECT: {item.surveyLine || 'SCAN'}</span>
                       </div>
                     </div>
 

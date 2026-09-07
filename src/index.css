@@ -4,14 +4,22 @@
 
 :root {
   color-scheme: dark;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
 }
 
 body {
   background-color: #000000;
   color: #cccccc;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-sans);
   overflow-x: hidden;
 }
+
+/* Mono utility for technical labels */
+.font-technical {
+  font-family: var(--font-mono);
+}
+
 
 /* Custom minimal monochrome scrollbar */
 ::-webkit-scrollbar {

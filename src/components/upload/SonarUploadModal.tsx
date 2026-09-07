@@ -1,11 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { Upload, X, FileText, CheckCircle2, AlertTriangle, Disc } from 'lucide-react';
-import { MicroRadar } from '../radar/MicroRadar';
+import { Upload, X, CheckCircle2 } from 'lucide-react';
+import { fileToDataURL } from '../../utils/scanStorage';
 
 interface SonarUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUploadSuccess: (filename: string) => void;
+  onUploadSuccess: (file: File | null, filename: string, dataUrl?: string) => void;
 }
 
 export const SonarUploadModal: React.FC<SonarUploadModalProps> = ({
@@ -15,8 +15,10 @@ export const SonarUploadModal: React.FC<SonarUploadModalProps> = ({
 }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<{
+    file: File | null;
     name: string;
     size: string;
+    dataUrl?: string;
   } | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -40,19 +42,27 @@ export const SonarUploadModal: React.FC<SonarUploadModalProps> = ({
     setDragActive(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      processFile(file.name, `${(file.size / (1024 * 1024)).toFixed(1)} MB`);
+      processFile(file, file.name, `${(file.size / (1024 * 1024)).toFixed(2)} MB`);
     }
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      processFile(file.name, `${(file.size / (1024 * 1024)).toFixed(1)} MB`);
+      processFile(file, file.name, `${(file.size / (1024 * 1024)).toFixed(2)} MB`);
     }
   };
 
-  const processFile = (name: string, size: string) => {
-    setSelectedFile({ name, size });
+  const processFile = async (file: File | null, name: string, size: string) => {
+    let dataUrl: string | undefined = undefined;
+    if (file) {
+      try {
+        dataUrl = await fileToDataURL(file);
+      } catch (err) {
+        console.error('Failed to convert file to data URL', err);
+      }
+    }
+    setSelectedFile({ file, name, size, dataUrl });
     setIsProcessing(true);
     setUploadProgress(0);
 
@@ -63,52 +73,34 @@ export const SonarUploadModal: React.FC<SonarUploadModalProps> = ({
           setIsProcessing(false);
           return 100;
         }
-        return prev + 6;
+        return prev + 20;
       });
-    }, 70);
-  };
-
-  const handleSimulateDefault = () => {
-    processFile('SONAR_SURVEY_104.TIFF', '48.2 MB');
+    }, 40);
   };
 
   const handleConfirm = () => {
     if (selectedFile) {
-      onUploadSuccess(selectedFile.name);
+      onUploadSuccess(selectedFile.file, selectedFile.name, selectedFile.dataUrl);
       onClose();
     }
   };
 
-  // ASCII progress representation
-  const totalBlocks = 20;
-  const filled = Math.round((uploadProgress / 100) * totalBlocks);
-  const asciiBar = '█'.repeat(filled) + '░'.repeat(totalBlocks - filled);
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md font-mono select-none">
-      <div className="w-full max-w-xl bg-[#0a0a0a] border border-white p-6 relative shadow-2xl">
-        {/* Corner Accents */}
-        <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white" />
-        <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white" />
-        <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white" />
-        <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white" />
-
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm font-sans select-none">
+      <div className="w-full max-w-lg bg-[#0a0a0a] border border-[#333333] p-6 relative shadow-2xl">
         {/* Modal Header */}
         <div className="flex items-center justify-between pb-4 border-b border-[#222222]">
-          <div className="flex items-center gap-2.5">
-            <MicroRadar size={22} />
-            <div>
-              <div className="text-xs font-bold text-white uppercase tracking-widest">
-                SONAR FILE INGESTION
-              </div>
-              <div className="text-[10px] text-[#666666]">
-                SIDE-SCAN RAW ACOUSTIC RECONSTRUCTION
-              </div>
-            </div>
+          <div>
+            <h2 className="text-base font-bold text-white">
+              Upload Sonar Image
+            </h2>
+            <p className="text-xs text-[#888888] mt-0.5">
+              Select a side-scan sonar image for AI inference
+            </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-[#222222] text-[#888888] hover:text-white transition-colors"
+            className="p-1 hover:bg-[#222222] text-[#888888] hover:text-white transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -118,7 +110,7 @@ export const SonarUploadModal: React.FC<SonarUploadModalProps> = ({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".tiff,.tif,.png,.jpg,.jpeg,.csv,.json"
+          accept=".tiff,.tif,.png,.jpg,.jpeg"
           onChange={handleFileInput}
           className="hidden"
         />
@@ -135,50 +127,48 @@ export const SonarUploadModal: React.FC<SonarUploadModalProps> = ({
               : 'border-[#333333] hover:border-white/70 bg-[#0d0d0d]'
           }`}
         >
-          <Upload className="w-8 h-8 text-white mx-auto mb-3 animate-pulse" />
-          <div className="text-sm font-bold text-white tracking-widest uppercase mb-1">
-            DROP SIDE-SCAN SONAR DATA
+          <Upload className="w-8 h-8 text-white mx-auto mb-3" />
+          <div className="text-sm font-semibold text-white mb-1">
+            Choose a sonar image file or drag here
           </div>
-          <p className="text-[11px] text-[#888888] mb-3">
-            Click to browse or drag and drop hydrophone recordings
+          <p className="text-xs text-[#888888] mb-2">
+            Standard PNG, JPG, or TIFF sonar scans supported
           </p>
-          <div className="text-[10px] text-[#555555] tracking-wider uppercase">
-            SUPPORTED: PNG // JPG // TIFF // CSV // JSON
+          <div className="text-[11px] text-[#555555] font-mono">
+            PNG &bull; JPG &bull; TIFF
           </div>
         </div>
 
-        {/* Quick Sample File Loader */}
-        <div className="flex items-center justify-between px-3 py-2 bg-[#111111] border border-[#222222] text-xs mb-4">
-          <span className="text-[#888888] text-[10px]">PRE-LOADED TRANSECT:</span>
-          <button
-            onClick={handleSimulateDefault}
-            className="text-[11px] text-white hover:underline font-bold"
-          >
-            [ LOAD SONAR_SURVEY_104.TIFF ]
-          </button>
-        </div>
-
-        {/* Selected File & Simulation Details */}
+        {/* Selected File Details */}
         {selectedFile && (
-          <div className="p-4 border border-[#2b2b2b] bg-[#0f0f0f] space-y-3 mb-4">
+          <div className="p-3.5 border border-[#2b2b2b] bg-[#0f0f0f] space-y-2.5 mb-4">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-white font-bold">{selectedFile.name}</span>
-              <span className="text-[#888888]">FILE SIZE: {selectedFile.size}</span>
+              <span className="text-white font-medium truncate max-w-[280px]">{selectedFile.name}</span>
+              <span className="text-[#888888] font-mono">{selectedFile.size}</span>
             </div>
 
-            <div className="flex items-center justify-between text-[11px] text-[#aaaaaa]">
-              <span>SIGNAL STATUS: <strong className="text-white">READY</strong></span>
-              <span>SAMPLING: 455 kHz CHIRP</span>
-            </div>
+            {/* Thumbnail Preview */}
+            {selectedFile.dataUrl && (
+              <div className="relative h-28 w-full border border-[#333333] bg-black overflow-hidden flex items-center justify-center">
+                <img
+                  src={selectedFile.dataUrl}
+                  alt="Sonar Preview"
+                  className="w-full h-full object-contain filter grayscale contrast-125"
+                />
+              </div>
+            )}
 
-            {/* ASCII Processing Meter */}
+            {/* Progress Bar */}
             <div className="space-y-1">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-[#888888]">PROCESSING:</span>
+              <div className="flex items-center justify-between text-xs font-mono text-[#888888]">
+                <span>STATUS: {uploadProgress >= 100 ? 'READY' : 'LOADING'}</span>
                 <span className="text-white font-bold">{uploadProgress}%</span>
               </div>
-              <div className="text-xs text-white tracking-tighter select-none">
-                {asciiBar}
+              <div className="w-full bg-[#1c1c1c] h-1 border border-[#333333]">
+                <div
+                  className="bg-white h-full transition-all duration-200"
+                  style={{ width: `${uploadProgress}%` }}
+                />
               </div>
             </div>
           </div>
@@ -188,9 +178,9 @@ export const SonarUploadModal: React.FC<SonarUploadModalProps> = ({
         <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#222222]">
           <button
             onClick={onClose}
-            className="px-4 py-2 border border-[#333333] text-xs text-[#888888] hover:text-white hover:border-white transition-colors"
+            className="px-4 py-2 border border-[#333333] text-xs text-[#888888] hover:text-white hover:border-white transition-colors cursor-pointer"
           >
-            CANCEL
+            Cancel
           </button>
           <button
             onClick={handleConfirm}
@@ -201,7 +191,7 @@ export const SonarUploadModal: React.FC<SonarUploadModalProps> = ({
                 : 'bg-[#181818] text-[#555555] border border-[#262626] cursor-not-allowed'
             }`}
           >
-            {isProcessing ? 'DECOMPRESSING...' : 'INITIALIZE DATASET →'}
+            {isProcessing ? 'Loading...' : 'Load into Workspace'}
           </button>
         </div>
       </div>

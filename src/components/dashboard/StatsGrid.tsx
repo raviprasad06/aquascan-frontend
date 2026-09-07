@@ -1,116 +1,92 @@
 import React, { useEffect, useState } from 'react';
-import { Layers, AlertTriangle, ShieldCheck, MapPin, Gauge } from 'lucide-react';
+import { Layers, AlertTriangle, ShieldCheck, Gauge } from 'lucide-react';
+import { getScanHistory, getScanStats, ScanStats } from '../../utils/scanStorage';
 
 export const StatsGrid: React.FC = () => {
-  const [counts, setCounts] = useState({
+  const [statsData, setStatsData] = useState<ScanStats>({
     totalScans: 0,
-    anomalies: 0,
-    highConfidence: 0,
-    areaAnalyzed: 0,
+    totalDetections: 0,
+    highRiskDetections: 0,
     avgConfidence: 0,
   });
 
   useEffect(() => {
-    const duration = 1200; // ms
-    const steps = 30;
-    const intervalTime = duration / steps;
-    let step = 0;
-
-    const targets = {
-      totalScans: 1284,
-      anomalies: 347,
-      highConfidence: 281,
-      areaAnalyzed: 428,
-      avgConfidence: 91.7,
+    const syncData = () => {
+      const currentStats = getScanStats();
+      setStatsData(currentStats);
     };
 
-    const timer = setInterval(() => {
-      step++;
-      const factor = Math.min(1, step / steps);
-      // Ease out cubic
-      const ease = 1 - Math.pow(1 - factor, 3);
+    syncData();
 
-      setCounts({
-        totalScans: Math.round(targets.totalScans * ease),
-        anomalies: Math.round(targets.anomalies * ease),
-        highConfidence: Math.round(targets.highConfidence * ease),
-        areaAnalyzed: Math.round(targets.areaAnalyzed * ease),
-        avgConfidence: Number((targets.avgConfidence * ease).toFixed(1)),
-      });
+    window.addEventListener('aquascan-scan-updated', syncData);
+    window.addEventListener('storage', syncData);
 
-      if (step >= steps) {
-        clearInterval(timer);
-      }
-    }, intervalTime);
-
-    return () => clearInterval(timer);
+    return () => {
+      window.removeEventListener('aquascan-scan-updated', syncData);
+      window.removeEventListener('storage', syncData);
+    };
   }, []);
+
+  const hasRealScans = statsData.totalScans > 0;
 
   const stats = [
     {
-      label: 'TOTAL SCANS',
-      value: counts.totalScans.toLocaleString(),
-      subtext: '+38 SCANS TODAY',
+      label: 'Total Scans',
+      value: hasRealScans ? statsData.totalScans.toLocaleString() : '0',
+      subtext: hasRealScans ? 'Analyzed files recorded' : 'No scans recorded yet',
       icon: Layers,
-      unit: 'ACOUSTIC SWATHS',
+      unit: 'SCANS',
     },
     {
-      label: 'ANOMALIES DETECTED',
-      value: counts.anomalies.toLocaleString(),
-      subtext: '12 UNRESOLVED',
+      label: 'Total Detections',
+      value: hasRealScans ? statsData.totalDetections.toLocaleString() : '0',
+      subtext: hasRealScans ? `${statsData.totalDetections} targets identified` : 'No targets detected',
       icon: AlertTriangle,
-      unit: 'SEABED TARGETS',
+      unit: 'TARGETS',
     },
     {
-      label: 'HIGH CONFIDENCE',
-      value: counts.highConfidence.toLocaleString(),
-      subtext: '81.0% OF DETECTIONS',
+      label: 'High Risk Detections',
+      value: hasRealScans ? statsData.highRiskDetections.toLocaleString() : '0',
+      subtext: hasRealScans ? 'High priority targets' : 'No high risk targets',
       icon: ShieldCheck,
-      unit: '≥90% VERIFIED',
+      unit: 'CRITICAL',
     },
     {
-      label: 'AREA ANALYZED',
-      value: `${counts.areaAnalyzed} KM²`,
-      subtext: 'SWATH RESOLUTION: 0.05M',
-      icon: MapPin,
-      unit: 'BATHYAL CONTOUR',
-    },
-    {
-      label: 'AVERAGE CONFIDENCE',
-      value: `${counts.avgConfidence}%`,
-      subtext: 'MODEL: SONAR-AI V1',
+      label: 'Average Confidence',
+      value: hasRealScans ? `${statsData.avgConfidence}%` : 'N/A',
+      subtext: hasRealScans ? 'Model: YOLO Shipwreck' : 'Awaiting image analysis',
       icon: Gauge,
-      unit: 'PRECISION INDEX',
+      unit: 'CONFIDENCE',
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 font-mono select-none">
-      {stats.map((stat, idx) => {
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 select-none font-sans">
+      {stats.map((stat) => {
         const Icon = stat.icon;
         return (
           <div
             key={stat.label}
-            className="p-3.5 bg-[#090909] border border-[#222222] relative group hover:border-white/50 transition-colors"
+            className="p-4 bg-[#090909] border border-[#222222] relative group hover:border-white/40 transition-colors"
           >
-            {/* Corner Bracket */}
+            {/* Corner Brackets */}
             <div className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-white" />
             <div className="absolute top-0 right-0 w-1.5 h-1.5 border-t border-r border-white" />
 
             <div className="flex items-center justify-between text-[#888888] mb-2">
-              <span className="text-[10px] tracking-wider uppercase font-bold">
+              <span className="text-xs font-medium text-[#aaaaaa]">
                 {stat.label}
               </span>
-              <Icon className="w-3.5 h-3.5 text-white" />
+              <Icon className="w-4 h-4 text-white" />
             </div>
 
-            <div className="text-2xl sm:text-3xl font-bold text-white tracking-tight my-1">
+            <div className="text-3xl sm:text-4xl font-bold text-white font-mono tracking-tight my-1">
               {stat.value}
             </div>
 
-            <div className="flex items-center justify-between text-[10px] text-[#666666] pt-2 border-t border-[#1a1a1a]">
-              <span>{stat.unit}</span>
-              <span className="text-white font-medium">{stat.subtext}</span>
+            <div className="flex items-center justify-between text-xs text-[#666666] pt-2 border-t border-[#1a1a1a]">
+              <span className="font-mono text-[10px] text-[#888888]">{stat.unit}</span>
+              <span className="text-[#999999]">{stat.subtext}</span>
             </div>
           </div>
         );

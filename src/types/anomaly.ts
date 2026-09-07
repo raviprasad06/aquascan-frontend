@@ -21,17 +21,17 @@ export interface BoundingBox {
 
 export interface SonarAnomaly {
   id: string; // e.g. "AN-104"
-  classification: AnomalyClass;
+  classification: AnomalyClass | string;
   confidence: number; // 0-100, e.g. 96.4
-  latitude: number;
-  longitude: number;
-  width: number; // meters
-  height: number; // meters
-  depth: number; // meters
+  latitude?: number;
+  longitude?: number;
+  width?: number; // meters
+  height?: number; // meters
+  depth?: number; // meters
   timestamp: string;
   priority: AnomalyPriority;
   status: AnomalyStatus;
-  boundingBox: BoundingBox;
+  boundingBox?: BoundingBox;
   acousticSignature: string;
   materialComposition?: string;
   estimatedVolume?: number; // m^3

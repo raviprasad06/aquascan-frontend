@@ -1,38 +1,24 @@
 import { SonarAnomaly } from '../types/anomaly';
 
-export function exportAnomaliesToCSV(anomalies: SonarAnomaly[], filename = 'SONAR_AI_ANOMALY_REPORT.csv') {
+export function exportAnomaliesToCSV(anomalies: SonarAnomaly[], filename = 'AQUASCAN_AI_DETECTION_REPORT.csv') {
   const headers = [
     'ID',
     'CLASSIFICATION',
     'CONFIDENCE_%',
-    'LATITUDE',
-    'LONGITUDE',
-    'WIDTH_M',
-    'HEIGHT_M',
-    'DEPTH_M',
-    'PRIORITY',
+    'PRIORITY_RISK',
     'STATUS',
-    'ESTIMATED_VOLUME_M3',
-    'MATERIAL_COMPOSITION',
-    'SURVEY_TRANSECT',
-    'ACOUSTIC_SIGNATURE',
+    'SURVEY_SCAN',
+    'DETAILS',
     'TIMESTAMP'
   ];
 
   const rows = anomalies.map(a => [
     `"${a.id}"`,
     `"${a.classification}"`,
-    a.confidence.toFixed(1),
-    a.latitude.toFixed(6),
-    a.longitude.toFixed(6),
-    a.width.toFixed(2),
-    a.height.toFixed(2),
-    a.depth.toFixed(1),
+    typeof a.confidence === 'number' ? a.confidence.toFixed(1) : '',
     `"${a.priority}"`,
     `"${a.status}"`,
-    (a.estimatedVolume || 0).toFixed(2),
-    `"${(a.materialComposition || '').replace(/"/g, '""')}"`,
-    `"${a.surveyLine}"`,
+    `"${a.surveyLine || ''}"`,
     `"${(a.acousticSignature || '').replace(/"/g, '""')}"`,
     `"${a.timestamp}"`
   ]);
@@ -50,15 +36,14 @@ export function exportAnomaliesToCSV(anomalies: SonarAnomaly[], filename = 'SONA
   URL.revokeObjectURL(url);
 }
 
-export function exportAnomaliesToJSON(anomalies: SonarAnomaly[], filename = 'SONAR_AI_ANOMALY_CATALOG.json') {
+export function exportAnomaliesToJSON(anomalies: SonarAnomaly[], filename = 'AQUASCAN_AI_DETECTION_REPORT.json') {
   const data = {
-    system: 'SONAR AI // AUTONOMOUS MARINE DEBRIS & ANOMALY DETECTION SYSTEM',
-    version: 'SONAR-AI V1.0.4-PROD',
+    application: 'AquaScan AI Sonar Marine Detection',
+    model: 'YOLO Segmentation',
+    detectionClass: 'Shipwreck',
     exportedAt: new Date().toISOString(),
     totalDetections: anomalies.length,
-    highConfidenceCount: anomalies.filter(a => a.confidence >= 90).length,
-    coordinateFrame: 'WGS84_GEODETIC',
-    sensorAcoustics: 'DUAL_FREQUENCY_SIDE_SCAN_455_900KHZ',
+    highRiskCount: anomalies.filter(a => a.priority === 'HIGH').length,
     detections: anomalies
   };
 

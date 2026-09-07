@@ -1,59 +1,61 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { StatsGrid } from '../components/dashboard/StatsGrid';
-import { AuvTelemetryPanel } from '../components/dashboard/AuvTelemetryPanel';
+import { SonarImagePreview } from '../components/dashboard/SonarImagePreview';
 import { RecentAnomaliesList } from '../components/dashboard/RecentAnomaliesList';
-import { LiveWaterfallFeed } from '../components/feed/LiveWaterfallFeed';
-import { Play, ArrowRight, MapPin, Layers, Radio, ShieldCheck } from 'lucide-react';
-import { MicroRadar } from '../components/radar/MicroRadar';
+import { Play, MapPin, Upload } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
   return (
-    <div className="space-y-5 p-4 sm:p-6 max-w-7xl mx-auto font-mono text-white select-none">
-      {/* Dashboard Top Header (Exact match to Requirement #9) */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-[#090909] border border-[#222222]">
+    <div className="space-y-6 p-4 sm:p-6 max-w-7xl mx-auto font-sans text-white select-none">
+      {/* Dashboard Top Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4 p-5 bg-[#090909] border border-[#222222]">
         <div className="space-y-1">
-          <div className="flex items-center gap-2.5">
-            <MicroRadar size={22} />
-            <h1 className="text-lg sm:text-xl font-bold tracking-widest text-white uppercase font-sans">
-              MARINE INTELLIGENCE CENTER
+          <div className="flex items-center gap-3">
+            <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" />
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight font-sans">
+              Marine Sonar Intelligence Dashboard
             </h1>
           </div>
-          <div className="flex items-center gap-2 text-xs text-[#888888]">
-            <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-            <span className="tracking-wider">
-              AUTONOMOUS ANALYSIS SYSTEM // READY
-            </span>
+          <div className="text-xs text-[#888888]">
+            AI-powered side-scan sonar detection system &bull; Shipwreck classification
           </div>
         </div>
 
-        {/* Action button to launch sonar analysis */}
-        <div className="flex items-center gap-2">
+        {/* Action buttons */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Link
+            to="/sonar-analysis?upload=true"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-[#141414] border border-[#333333] hover:border-white text-white text-xs font-semibold uppercase transition-colors"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span>Upload Sonar</span>
+          </Link>
           <Link
             to="/sonar-analysis"
             className="flex items-center gap-2 px-4 py-2 bg-white text-black font-bold text-xs uppercase hover:bg-[#dddddd] transition-all shadow-glow-sm cursor-pointer"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
-            <span>LAUNCH ANALYSIS WORKSPACE</span>
+            <span>Open Analysis</span>
           </Link>
           <Link
             to="/detection-map"
-            className="flex items-center gap-2 px-3.5 py-2 bg-[#121212] border border-[#333333] hover:border-white text-white text-xs uppercase transition-colors"
+            className="flex items-center gap-2 px-3.5 py-2 bg-[#121212] border border-[#333333] hover:border-white text-white text-xs font-semibold uppercase transition-colors"
           >
             <MapPin className="w-3.5 h-3.5" />
-            <span>SURVEY MAP</span>
+            <span>Detection Map</span>
           </Link>
         </div>
       </div>
 
-      {/* 5 Animated Stats (Exact match to Requirement #9) */}
+      {/* 4 Stats Cards */}
       <StatsGrid />
 
-      {/* Live Waterfall Feed & Recent Anomalies */}
+      {/* Sonar Image Preview & Recent Anomalies */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Left: Real-time Live Sonar Spectrogram Feed */}
-        <div className="lg:col-span-8 space-y-3">
-          <LiveWaterfallFeed />
+        {/* Left: Real Sonar Image Preview */}
+        <div className="lg:col-span-8">
+          <SonarImagePreview />
         </div>
 
         {/* Right: Detected Anomalies Feed */}
@@ -61,9 +63,8 @@ export const DashboardPage: React.FC = () => {
           <RecentAnomaliesList />
         </div>
       </div>
-
-      {/* AUV Sensor Pod Telemetry Grid */}
-      <AuvTelemetryPanel />
     </div>
   );
 };
+
+export default DashboardPage;
